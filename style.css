@@ -116,7 +116,7 @@ input[type="number"] {
   left: 0;
   width: 100%;
   height: 100%;
-  background: rgba(240, 240, 240, 0.8); /* Transparent light gray loading screen background */
+  background: rgba(240, 240, 240, 0.8); 
   display: flex;
   flex-direction: column;
   justify-content: center;
