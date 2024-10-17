@@ -4,62 +4,78 @@ new Vue({
     gender: '',
     age: '',
     weight: '',
-    heightFeet: '',
-    heightInches: '',
+    heightFt: '',
+    heightIn: '',
     heightCm: '',
-    activity: '',
-    weightUnit: 'lbs', // Default weight unit
-    heightUnit: 'inches', // Default height unit
+    activityLevel: '',
+    weightUnit: 'lbs',
+    heightUnit: 'in',
     tdee: null,
     loading: false
   },
   methods: {
+    validateInputs() {
+      if (!this.gender || !this.age || !this.weight || !this.activityLevel) {
+        alert('Please fill in all required fields');
+        return false;
+      }
+
+      if (this.heightUnit === 'cm' && !this.heightCm) {
+        alert('Please enter your height');
+        return false;
+      }
+
+      if (this.heightUnit === 'in' && (!this.heightFt || !this.heightIn)) {
+        alert('Please enter your height');
+        return false;
+      }
+
+      return true;
+    },
+    convertHeight() {
+      let heightInCm;
+      if (this.heightUnit === 'cm') {
+        heightInCm = parseFloat(this.heightCm);
+      } else {
+        heightInCm = (parseFloat(this.heightFt) * 30.48) + (parseFloat(this.heightIn) * 2.54);
+      }
+      return heightInCm;
+    },
+    convertWeight() {
+      return this.weightUnit === 'lbs' ? this.weight * 0.45359237 : this.weight;
+    },
+    calculateBMR(weightInKg, heightInCm) {
+      if (this.gender === 'male') {
+        return 88.362 + (13.397 * weightInKg) + (4.799 * heightInCm) - (5.677 * this.age);
+      } else {
+        return 447.593 + (9.247 * weightInKg) + (3.098 * heightInCm) - (4.330 * this.age);
+      }
+    },
     calculateTDEE() {
+      if (!this.validateInputs()) {
+        return;
+      }
+
       this.loading = true;
+      
       setTimeout(() => {
-        let weightInKg = this.weightUnit === 'lbs' ? this.weight * 0.45359237 : this.weight;
-        let heightInCm;
+        try {
+          const weightInKg = this.convertWeight();
+          const heightInCm = this.convertHeight();
 
-        if (this.heightUnit === 'cm') {
-          heightInCm = this.heightFeet * 30.48; // Convert feet to cm
-          heightInCm += this.heightInches * 2.54; // Add inches converted to cm
-        } else {
-          heightInCm = (this.heightFeet * 30.48) + (this.heightInches * 2.54); // Convert feet and inches to cm
-        }
+          if (isNaN(heightInCm) || isNaN(weightInKg)) {
+            throw new Error('Invalid input values');
+          }
 
-        if (this.heightUnit === 'cm') {
-          heightInCm = parseFloat(this.heightCm); // Use the height in cm directly
-        } else {
-          heightInCm = (parseFloat(this.heightFeet) * 30.48) + (parseFloat(this.heightInches) * 2.54); // Convert feet and inches to cm
-        }
-
-        if (isNaN(heightInCm) || isNaN(weightInKg)) {
-          this.tdee = 'Invalid input, please check your entries.';
+          const bmr = this.calculateBMR(weightInKg, heightInCm);
+          this.tdee = Math.round(bmr * parseFloat(this.activityLevel));
+        } catch (error) {
+          alert('Error calculating TDEE. Please check your inputs.');
+          this.tdee = null;
+        } finally {
           this.loading = false;
-          return;
         }
-
-        let bmr;
-
-        // Calculate BMR based on gender
-        if (this.gender === 'male') {
-          bmr = 88.362 + (13.397 * weightInKg) + (4.799 * heightInCm) - (5.677 * this.age);
-        } else if (this.gender === 'female') {
-          bmr = 447.593 + (9.247 * weightInKg) + (3.098 * heightInCm) - (4.330 * this.age);
-        }
-
-        // Adjust BMR based on activity level
-        const activityMultiplier = {
-          sedentary: 1.2,
-          light: 1.375,
-          moderate: 1.55,
-          active: 1.725,
-          veryActive: 1.9
-        };
-
-        this.tdee = Math.round(bmr * activityMultiplier[this.activity]);
-        this.loading = false;
-      }, 2000);
+      }, 1000);
     }
   }
 });

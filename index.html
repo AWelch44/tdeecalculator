@@ -1,65 +1,102 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="description" content="Use our TDEE Calculator to estimate your Total Daily Energy Expenditure and find out how many calories you need per day to maintain, lose, or gain weight.">
-  <meta name="keywords" content="TDEE, TDEE calculator, daily caloric needs, weight loss, weight gain, maintain weight, calorie calculator, fitness calculator">
   <title>TDEE Calculator</title>
+  <script src="https://cdn.jsdelivr.net/npm/vue@2.6.14"></script>
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
   <div class="tdee-calculator">
+    <div class="disclaimer">
+      <h3>Medical Disclaimer</h3>
+      <p>The TDEE Calculator is designed for informational purposes only and is not intended to provide medical advice. This calculator provides estimates based on general formulas and may not be suitable for everyone. Individual caloric needs can vary significantly based on numerous factors including medical conditions, medications, and individual metabolism.</p>
+      <p>Please consult with a qualified healthcare provider or registered dietitian before:</p>
+      <ul>
+        <li>Starting any diet or exercise program</li>
+        <li>Making significant changes to your daily caloric intake</li>
+        <li>Using these calculations for medical purposes</li>
+      </ul>
+      <p>By using this calculator, you acknowledge that you understand and agree to these terms.</p>
+    </div>
+
     <h1>TDEE Calculator</h1>
-    <form @submit.prevent="calculateTDEE">
+    
+    <div class="form-group">
+      <label class="form-label">Gender:</label>
+      <div class="measurement-group">
+        <label class="radio-label">
+          <input type="radio" v-model="gender" value="male">
+          <span>Male</span>
+        </label>
+        <label class="radio-label">
+          <input type="radio" v-model="gender" value="female">
+          <span>Female</span>
+        </label>
+      </div>
+    </div>
+
+    <div class="form-group">
+      <label class="form-label">Age:</label>
+      <input type="number" v-model="age" min="0" max="120">
+    </div>
+
+    <div class="form-group">
+      <label class="form-label">Weight:</label>
       <div>
-        <label for="gender">Gender:</label>
+        <input type="number" v-model="weight" min="0" step="0.1">
         <div class="measurement-group">
-          <label><input type="radio" name="gender" value="male" v-model="gender"> Male</label>
-          <label><input type="radio" name="gender" value="female" v-model="gender"> Female</label>
+          <label class="radio-label">
+            <input type="radio" v-model="weightUnit" value="kg">
+            <span>kg</span>
+          </label>
+          <label class="radio-label">
+            <input type="radio" v-model="weightUnit" value="lbs">
+            <span>lbs</span>
+          </label>
         </div>
       </div>
+    </div>
+
+    <div class="form-group">
+      <label class="form-label">Height:</label>
       <div>
-        <label for="age">Age:</label>
-        <input type="number" v-model="age" placeholder="Enter your age">
-      </div>
-      <div>
-        <label>Weight:</label>
-        <input type="number" v-model="weight" placeholder="Enter your weight">
-        <div class="measurement-group">
-          <label><input type="radio" name="weightUnit" value="kg" v-model="weightUnit"> kg</label>
-          <label><input type="radio" name="weightUnit" value="lbs" v-model="weightUnit"> lbs</label>
-        </div>
-      </div>
-      <div>
-        <label>Height:</label>
         <div v-if="heightUnit === 'cm'">
-          <input type="number" v-model="heightCm" placeholder="Height in cm">
+          <input type="number" v-model="heightCm" min="0" step="0.1">
         </div>
-        <div class="height-group">
-          <input type="number" v-model="heightFeet" placeholder="Feet">
-          <input type="number" v-model="heightInches" placeholder="Inches">
+        <div v-else class="height-group">
+          <input type="number" v-model="heightFt" min="0" placeholder="ft">
+          <input type="number" v-model="heightIn" min="0" max="11" placeholder="in">
         </div>
         <div class="measurement-group">
-          <label><input type="radio" name="heightUnit" value="cm" v-model="heightUnit"> Cm</label>
-          <label><input type="radio" name="heightUnit" value="inches" v-model="heightUnit"> In</label>
+          <label class="radio-label">
+            <input type="radio" v-model="heightUnit" value="cm">
+            <span>cm</span>
+          </label>
+          <label class="radio-label">
+            <input type="radio" v-model="heightUnit" value="in">
+            <span>in</span>
+          </label>
         </div>
       </div>
-      <div>
-        <label for="activity">Activity Level</label>
-        <select v-model="activity">
-          <option value="" disabled selected>Select your activity level</option>
-          <option value="sedentary">Sedentary (little or no exercise)</option>
-          <option value="light">Light (light exercise/sports 1-3 days/week)</option>
-          <option value="moderate">Moderate (moderate exercise/sports 3-5 days/week)</option>
-          <option value="active">Active (hard exercise/sports 6-7 days a week)</option>
-          <option value="veryActive">Very Active (very hard exercise/sports & physical job)</option>
-        </select>
-      </div>
-      <button type="submit">Calculate</button>
-    </form>
-    <div v-if="tdee">
-      <p class="maintenance-calories"><strong>{{ tdee }} Calories/day</strong></p>
+    </div>
+
+    <div class="form-group">
+      <label class="form-label">Activity Level:</label>
+      <select v-model="activityLevel">
+        <option value="">Select your activity level</option>
+        <option value="1.2">Sedentary (little or no exercise)</option>
+        <option value="1.375">Light (light exercise/sports 1-3 days/week)</option>
+        <option value="1.55">Moderate (moderate exercise/sports 3-5 days/week)</option>
+        <option value="1.725">Active (hard exercise/sports 6-7 days a week)</option>
+        <option value="1.9">Very Active (very hard exercise/sports & physical job)</option>
+      </select>
+    </div>
+
+    <button @click="calculateTDEE">Calculate</button>
+
+    <div v-if="tdee" class="results-section">
+      <h2>{{ tdee }} Calories/day</h2>
+      
       <div class="results">
         <div>
           <h3>Cutting</h3>
@@ -69,6 +106,7 @@
             <li>Fast (2 lb/week): {{ tdee - 1000 }} Calories/day</li>
           </ul>
         </div>
+
         <div>
           <h3>Bulking</h3>
           <ul>
@@ -79,16 +117,19 @@
         </div>
       </div>
     </div>
-    <div v-if="loading" class="loading-screen">
-      <img src="images/welchregimelogo.jpeg" alt="Loading..." class="loading-logo">
-      <p>Calculating...</p>
-    </div>
-    <div class="created-by">
 
-      <a href="http://www.andywelchmedia.com"><img src="images/welchregimelogo.jpeg" alt="Logo" class="logo"></a>
+    <div v-if="loading" class="loading-screen">
+      <img src="images/welchregimelogo.jpeg" class="loading-logo" alt="Loading...">
+      <div>Calculating...</div>
+    </div>
+
+    <div class="created-by">
+      <a href="http://www.andywelchmedia.com">
+        <img src="images/welchregimelogo.jpeg" class="logo" alt="Logo">
+      </a>
     </div>
   </div>
-  <script src="https://cdn.jsdelivr.net/npm/vue@2"></script>
+
   <script src="app.js"></script>
 </body>
 </html>
